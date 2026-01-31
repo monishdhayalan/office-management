@@ -1,6 +1,8 @@
+using System;
 using UnityEngine;
 using UnityEngine.AI;
 using System.Collections;
+using Random = UnityEngine.Random;
 
 public enum EmployeeType
 {
@@ -19,7 +21,7 @@ public enum WorkAnimations
 
 public class Employee : MonoBehaviour
 {
-    private NavMeshAgent agent;
+    public NavMeshAgent agent;
     public EmployeeType employeeType;
     public Animator animator;
     public SkinnedMeshRenderer Mesh;
@@ -32,9 +34,8 @@ public class Employee : MonoBehaviour
     private int moneyPerTick = 10;
     private Color RandomColor;
 
-    void Start()
+    void Awake()
     {
-        agent = GetComponent<NavMeshAgent>();
         RandomColor = Random.ColorHSV(0, 1, 0, 1, 0.5f, 1);
         
         Mesh.material.color = RandomColor;
@@ -48,26 +49,53 @@ public class Employee : MonoBehaviour
             case EmployeeType.Senior: moneyPerTick = 60; workInterval = 1f; break;
         }
 
+    }
+
+    private void Start()
+    {
+        StartEmployee();
+    }
+
+    public void StartEmployee()
+    {
         // Start looking for a table
         StartCoroutine(FindAndGoToTable());
+        
     }
 
     IEnumerator FindAndGoToTable()
     {
+        // Wait for agent to be on navmesh
+        while (!agent.isOnNavMesh)
+        {
+            yield return null;
+        }
+
         while (currentTable == null)
         {
             // Simple logic: Find first free table
+            // Finding free table
             if (Table.FreeTables.Count > 0)
             {
-                // Find closest? Or just first.
-                // For simplicity, pick first.
-                Table candidate = Table.FreeTables[0];
-                
-                if (candidate.AssignEmployee(this))
+                // Find closest table
+                Table closestTable = null;
+                float closestDist = float.MaxValue;
+
+                foreach(var t in Table.FreeTables)
                 {
-                    //StartCoroutine(SetAnimatorBoolCoroutine("IsWalking", true));
+                    if (t == null) continue;
+                    float d = Vector3.Distance(transform.position, t.transform.position);
+                    if (d < closestDist)
+                    {
+                        closestDist = d;
+                        closestTable = t;
+                    }
+                }
+
+                if (closestTable != null && closestTable.AssignEmployee(this))
+                {
                     animator.SetBool("IsWalking", true);
-                    currentTable = candidate;
+                    currentTable = closestTable;
                     agent.SetDestination(currentTable.GetInteractionPosition());
                 }
             }
@@ -80,7 +108,7 @@ public class Employee : MonoBehaviour
         }
 
         // Wait until we reach destination
-        while (agent.pathPending || agent.remainingDistance > agent.stoppingDistance)
+        while (!agent.isOnNavMesh || agent.pathPending || agent.remainingDistance > agent.stoppingDistance)
         {
             yield return null;
         }
@@ -99,6 +127,15 @@ public class Employee : MonoBehaviour
         {
             yield return new WaitForSeconds(workInterval);
             GameManager.Instance.AddMoney(moneyPerTick);
+            
+            // Play earning effect
+            if (GameManager.Instance.MoneyEarningEffectPrefab != null)
+            {
+                // Spawn above head
+                GameObject fx = Instantiate(GameManager.Instance.MoneyEarningEffectPrefab, transform.position + Vector3.up * 3, Quaternion.identity);
+                Destroy(fx, 2f);
+            }
+
             // Optional: Play work animation or effect
         }
     }

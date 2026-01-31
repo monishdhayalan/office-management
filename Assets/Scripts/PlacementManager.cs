@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 
 public class PlacementManager : MonoBehaviour
 {
@@ -188,7 +189,21 @@ public class PlacementManager : MonoBehaviour
                 }
             }
 
+            // Animate Scale
+            currentGhost.transform.localScale = Vector3.zero;
+
+            currentGhost.transform.DOScale(Vector3.one, 0.5f).SetEase(Ease.OutBack).SetDelay(.5f);
+
             currentGhost.OnPlaced();
+
+            // Spawn Effect
+            if (GameManager.Instance != null && GameManager.Instance.TableSpawnEffectPrefab != null)
+            {
+                GameObject fx = Instantiate(GameManager.Instance.TableSpawnEffectPrefab, currentGhost.transform.position + Vector3.up * 2, Quaternion.Euler(-90, 0, 0));
+                fx.transform.DOScale(Vector3.zero, 0.5f).SetEase(Ease.OutBack).SetDelay(.9f);
+                Destroy(fx, 2f);
+            }
+
             currentGhost = null;
             isPlacing = false;
             isLocked = false;

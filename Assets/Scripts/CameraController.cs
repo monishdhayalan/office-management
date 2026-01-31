@@ -7,13 +7,29 @@ public class CameraController : MonoBehaviour
     [SerializeField] private Vector2 minBounds = new Vector2(-50, -50);
     [SerializeField] private Vector2 maxBounds = new Vector2(50, 50);
 
+    [Header("Zoom")]
+    [SerializeField] private float zoomSensitivity = 5f;
+    [SerializeField] private float minZoom = 5f;
+    [SerializeField] private float maxZoom = 20f;
+    
+    // Smooth zoom variables
+    [SerializeField] private float zoomSmoothTime = 0.2f;
+    private float targetZoom;
+    private float zoomVelocity;
+    private Camera cam;
+
     private Vector3 dragOrigin;
     private Vector3 targetPosition;
     private Vector3 currentVelocity;
 
     private void Start()
     {
+        cam = GetComponent<Camera>();
         targetPosition = transform.position;
+        if (cam != null)
+        {
+            targetZoom = cam.orthographic ? cam.orthographicSize : cam.fieldOfView;
+        }
     }
 
     private void LateUpdate()
@@ -22,7 +38,29 @@ public class CameraController : MonoBehaviour
         if (PlacementManager.Instance != null && PlacementManager.Instance.IsPlacing) return;
 
         HandleInput();
+        HandleZoom();
         HandleMovement();
+    }
+
+    private void HandleZoom()
+    {
+        if (cam == null) return;
+
+        float scroll = Input.GetAxis("Mouse ScrollWheel");
+        if (scroll != 0)
+        {
+            targetZoom -= scroll * zoomSensitivity;
+            targetZoom = Mathf.Clamp(targetZoom, minZoom, maxZoom);
+        }
+
+        if (cam.orthographic)
+        {
+            cam.orthographicSize = Mathf.SmoothDamp(cam.orthographicSize, targetZoom, ref zoomVelocity, zoomSmoothTime);
+        }
+        else
+        {
+            cam.fieldOfView = Mathf.SmoothDamp(cam.fieldOfView, targetZoom, ref zoomVelocity, zoomSmoothTime);
+        }
     }
 
     private void HandleInput()

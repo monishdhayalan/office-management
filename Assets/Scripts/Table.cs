@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.AI;
 
 public class Table : PlaceableObject
 {
@@ -65,40 +66,19 @@ public class Table : PlaceableObject
     
     public Vector3 GetInteractionPosition()
     {
-        if (InteractionPositions != null && InteractionPositions.Count > 0)
+        Vector3 targetPos = transform.position;
+
+        if (InteractionPositions != null && InteractionPositions.Count > 0 && InteractionPositions[0] != null)
         {
-            foreach (Transform t in InteractionPositions)
-            {
-                if (t != null)
-                {
-                    // Check if the position is clear of obstacles
-                    // Using a small sphere check. 
-                    // Note: We assume the interaction point is at ground level or slightly above.
-                    // We want to verify no walls/furniture block this specific point.
-                    // Radius 0.3f matches roughly half a standard unit width.
-                    // We filter normally for Default/Obstacle layers. Since we can't access GridManager's layer easily,
-                    // we'll rely on global physics or assume obstacles are on Default.
-                    // To be safe, we exclude the Floor layer if possible, but usually Floor is on "Default"?
-                    // Let's assume hitting "Anything" is an obstacle EXCEPT the floor?
-                    // Better: User prompt "check for obstacles".
-                    // Let's Raycast from Above.
-                    
-                    // Simple check: Is there a collider here?
-                    // Excluding the Table itself might be tricky if it has a large collider.
-                    // But Interaction points are usually outside.
-                    
-                    // Let's try IsAreaFree from GridManager?
-                    Vector2Int gridPos = GridManager.Instance.WorldToGridPosition(t.position);
-                    if (GridManager.Instance.IsCellFree(gridPos.x, gridPos.y))
-                    {
-                        return t.position;
-                    }
-                }
-            }
-            // If all blocked, fallback to first? or Transform.
-            return InteractionPositions[0].position; 
+            targetPos = InteractionPositions[0].position; 
         }
 
-        return transform.position;
+        // Project to NavMesh
+        if (NavMesh.SamplePosition(targetPos, out NavMeshHit hit, 2.0f, NavMesh.AllAreas))
+        {
+            return hit.position;
+        }
+
+        return targetPos;
     }
 }
