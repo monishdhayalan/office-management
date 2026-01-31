@@ -15,7 +15,12 @@ public class PlacementManager : MonoBehaviour
 
     private PlaceableObject currentGhost;
     private Renderer[] ghostRenderers;
-    private bool isPlacing = false;
+    public bool IsPlacing { get; private set; } = false;
+    private bool isPlacing
+    {
+        get => IsPlacing;
+        set => IsPlacing = value;
+    }
     private bool isLocked = false; // Waiting for confirmation
     private Vector2Int lockedGridPos;
 

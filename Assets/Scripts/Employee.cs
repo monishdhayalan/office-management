@@ -22,6 +22,7 @@ public class Employee : MonoBehaviour
     private NavMeshAgent agent;
     public EmployeeType employeeType;
     public Animator animator;
+    public SkinnedMeshRenderer Mesh;
     
     private Table currentTable;
     private bool isWorking = false;
@@ -29,10 +30,14 @@ public class Employee : MonoBehaviour
     // Simulation params
     private float workInterval = 2.0f;
     private int moneyPerTick = 10;
+    private Color RandomColor;
 
     void Start()
     {
         agent = GetComponent<NavMeshAgent>();
+        RandomColor = Random.ColorHSV(0, 1, 0, 1, 0.5f, 1);
+        
+        Mesh.material.color = RandomColor;
         
         // Define stats based on type
         switch(employeeType)
