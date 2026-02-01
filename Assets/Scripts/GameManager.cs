@@ -12,7 +12,6 @@ public class GameManager : MonoBehaviour
     public event Action<int> OnMoneyChanged;
     public event Action OnPurchaseConfirmed; // Called when placement/spawn is confirmed
     public GameObject Table;
-    public GameObject EmployeePrefab;
     public List<GameObject> EmployeeSkinPrefabs;
     public LayerMask floorLayer; // Assign in Inspector
     public Material GhostMaterial;
@@ -66,9 +65,11 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    private int emplyeeIndx;
     public GameObject GetEmpoyeeSkin()
     {
-        return EmployeeSkinPrefabs[Random.Range(0, EmployeeSkinPrefabs.Count)]; 
+        emplyeeIndx  = (emplyeeIndx + 1) % EmployeeSkinPrefabs.Count; 
+        return EmployeeSkinPrefabs[emplyeeIndx]; 
     }
 
     public void StartSpawningEmployee(GameObject prefab, ShopItemSO itemSO = null, int cost = 0)

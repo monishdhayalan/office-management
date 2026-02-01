@@ -36,7 +36,8 @@ public class ShopItem : MonoBehaviour
             
             if (ItemSO.EShopItem == EShopItems.Employee)
             {
-                GameManager.Instance.StartSpawningEmployee(ItemSO.ItemPrefab, ItemSO, currentCost);
+                GameObject prefab = GameManager.Instance.GetEmpoyeeSkin();
+                GameManager.Instance.StartSpawningEmployee(prefab, ItemSO, currentCost);
             }
             else
             {
