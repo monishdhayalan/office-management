@@ -27,20 +27,20 @@ public class ShopItem : MonoBehaviour
 
         if (GameManager.Instance.TrySpendMoney(currentCost))
         {
-            GameManager.Instance.IncrementItemPurchaseCount(ItemSO);
+            // Don't increment purchase count here - wait for confirmed placement
             
-            // Refresh visuals 
+            // Refresh visuals (cost will update after placement is confirmed)
             UpdateUI();
 
             UIManager.Instance.CloseShop();
             
             if (ItemSO.EShopItem == EShopItems.Employee)
             {
-                GameManager.Instance.StartSpawningEmployee(ItemSO.ItemPrefab);
+                GameManager.Instance.StartSpawningEmployee(ItemSO.ItemPrefab, ItemSO, currentCost);
             }
             else
             {
-                PlacementManager.Instance.StartPlacement(ItemSO.ItemPrefab);
+                PlacementManager.Instance.StartPlacement(ItemSO.ItemPrefab, ItemSO, currentCost);
             }
         }
         else
@@ -57,6 +57,17 @@ public class ShopItem : MonoBehaviour
         Item.sprite = ItemSO.ItemSprite;
         ItemName.SetText(ItemSO.ItemName);
         UpdateUI();
+        
+        // Subscribe to purchase confirmed to update cost after successful placement
+        GameManager.Instance.OnPurchaseConfirmed += UpdateUI;
+    }
+
+    private void OnDisable()
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.OnPurchaseConfirmed -= UpdateUI;
+        }
     }
 
     private void UpdateUI()

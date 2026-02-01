@@ -10,6 +10,7 @@ public class GameManager : MonoBehaviour
     public int Money { get; private set; } = 0;
 
     public event Action<int> OnMoneyChanged;
+    public event Action OnPurchaseConfirmed; // Called when placement/spawn is confirmed
     public GameObject Table;
     public GameObject EmployeePrefab;
     public List<GameObject> EmployeeSkinPrefabs;
@@ -23,6 +24,10 @@ public class GameManager : MonoBehaviour
     private bool isSpawningEmployee = false;
     private GameObject employeePrefabToSpawn;
     private GameObject currentEmployeeGhost;
+    
+    // Pending purchase info for employee spawning
+    private ShopItemSO pendingEmployeeItemSO;
+    private int pendingEmployeeCost;
 
     private Dictionary<ShopItemSO, int> itemPurchaseCounts = new Dictionary<ShopItemSO, int>();
 
@@ -38,9 +43,9 @@ public class GameManager : MonoBehaviour
             DontDestroyOnLoad(gameObject);
         }
         
-        #if UNITY_EDITOR
-        AddMoney(1000);
-        #endif
+        // #if UNITY_EDITOR
+        // AddMoney(1000);
+        // #endif
     }
 
     private void Update()
@@ -66,10 +71,12 @@ public class GameManager : MonoBehaviour
         return EmployeeSkinPrefabs[Random.Range(0, EmployeeSkinPrefabs.Count)]; 
     }
 
-    public void StartSpawningEmployee(GameObject prefab)
+    public void StartSpawningEmployee(GameObject prefab, ShopItemSO itemSO = null, int cost = 0)
     {
         employeePrefabToSpawn = prefab;
         isSpawningEmployee = true;
+        pendingEmployeeItemSO = itemSO;
+        pendingEmployeeCost = cost;
         
         // Create Ghost
         if (currentEmployeeGhost != null) Destroy(currentEmployeeGhost);
@@ -119,6 +126,8 @@ public class GameManager : MonoBehaviour
                     Destroy(fx, 2f); // Cleanup after 2 seconds
                 }
 
+                // Confirm purchase on successful spawn
+                ConfirmEmployeePurchase();
                 StopSpawning();
             }
         }
@@ -126,6 +135,7 @@ public class GameManager : MonoBehaviour
         // Right click cancel
         if (Input.GetMouseButtonDown(1))
         {
+            RefundEmployeePurchase();
             StopSpawning();
         }
     }
@@ -139,6 +149,32 @@ public class GameManager : MonoBehaviour
             Destroy(currentEmployeeGhost);
             currentEmployeeGhost = null;
         }
+    }
+
+    private void ConfirmEmployeePurchase()
+    {
+        if (pendingEmployeeItemSO != null)
+        {
+            IncrementItemPurchaseCount(pendingEmployeeItemSO);
+            pendingEmployeeItemSO = null;
+            pendingEmployeeCost = 0;
+            OnPurchaseConfirmed?.Invoke();
+        }
+    }
+
+    private void RefundEmployeePurchase()
+    {
+        if (pendingEmployeeItemSO != null && pendingEmployeeCost > 0)
+        {
+            RefundMoney(pendingEmployeeCost);
+            pendingEmployeeItemSO = null;
+            pendingEmployeeCost = 0;
+        }
+    }
+
+    public void TriggerPurchaseConfirmed()
+    {
+        OnPurchaseConfirmed?.Invoke();
     }
 
     public void AddMoney(int amount)
@@ -158,6 +194,13 @@ public class GameManager : MonoBehaviour
             return true;
         }
         return false;
+    }
+
+    public void RefundMoney(int amount)
+    {
+        Money += amount;
+        OnMoneyChanged?.Invoke(Money);
+        Debug.Log($"Money Refunded: {amount}. Total: {Money}");
     }
 
     public int GetItemCurrentCost(ShopItemSO item)

@@ -27,6 +27,10 @@ public class PlacementManager : MonoBehaviour
 
     private Dictionary<Renderer, Material[]> originalMaterials = new Dictionary<Renderer, Material[]>();
     
+    // Pending purchase info for refund on cancel
+    private ShopItemSO pendingItemSO;
+    private int pendingCost;
+    
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -40,9 +44,12 @@ public class PlacementManager : MonoBehaviour
     }
     
 
-    public void StartPlacement(GameObject prefab)
+    public void StartPlacement(GameObject prefab, ShopItemSO itemSO = null, int cost = 0)
     {
         if (isPlacing) CancelPlacement();
+
+        pendingItemSO = itemSO;
+        pendingCost = cost;
 
         GameObject obj = Instantiate(prefab);
         currentGhost = obj.GetComponent<PlaceableObject>();
@@ -50,6 +57,7 @@ public class PlacementManager : MonoBehaviour
         {
             Debug.LogError("Prefab does not have PlaceableObject component!");
             Destroy(obj);
+            RefundPendingPurchase();
             return;
         }
 
@@ -73,7 +81,9 @@ public class PlacementManager : MonoBehaviour
     {
         if (!isPlacing) return;
 
-        if (Input.GetKeyDown(KeyCode.R))
+        // Use scroll wheel to rotate
+        float scroll = Input.mouseScrollDelta.y;
+        if (scroll != 0)
         {
             if (isLocked)
             {
@@ -84,6 +94,13 @@ public class PlacementManager : MonoBehaviour
                 AudioManager.Instance.PlaySFX(SoundType.RotateObject);
                 currentGhost.Rotate();
             }
+        }
+
+        // Right click to cancel placement
+        if (Input.GetMouseButtonDown(1))
+        {
+            CancelPlacement();
+            return;
         }
 
         if (isLocked) return;
@@ -206,6 +223,9 @@ public class PlacementManager : MonoBehaviour
                 Destroy(fx, 2f);
             }
 
+            // Confirm purchase (increment count) only on success
+            ConfirmPendingPurchase();
+
             currentGhost = null;
             isPlacing = false;
             isLocked = false;
@@ -223,8 +243,33 @@ public class PlacementManager : MonoBehaviour
         {
             Destroy(currentGhost.gameObject);
         }
+        
+        // Refund money on cancel
+        RefundPendingPurchase();
+        
         isPlacing = false;
         isLocked = false;
         placementUI.Hide();
+    }
+
+    private void ConfirmPendingPurchase()
+    {
+        if (pendingItemSO != null)
+        {
+            GameManager.Instance.IncrementItemPurchaseCount(pendingItemSO);
+            pendingItemSO = null;
+            pendingCost = 0;
+            GameManager.Instance.TriggerPurchaseConfirmed();
+        }
+    }
+
+    private void RefundPendingPurchase()
+    {
+        if (pendingItemSO != null && pendingCost > 0)
+        {
+            GameManager.Instance.RefundMoney(pendingCost);
+            pendingItemSO = null;
+            pendingCost = 0;
+        }
     }
 }
