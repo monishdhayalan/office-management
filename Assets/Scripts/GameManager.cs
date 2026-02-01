@@ -1,6 +1,7 @@
 using UnityEngine;
 using System;
 using System.Collections.Generic;
+using Random = UnityEngine.Random;
 
 public class GameManager : MonoBehaviour
 {
@@ -11,6 +12,7 @@ public class GameManager : MonoBehaviour
     public event Action<int> OnMoneyChanged;
     public GameObject Table;
     public GameObject EmployeePrefab;
+    public List<GameObject> EmployeeSkinPrefabs;
     public LayerMask floorLayer; // Assign in Inspector
     public Material GhostMaterial;
     public GameObject SpawnEffectPrefab;
@@ -49,13 +51,19 @@ public class GameManager : MonoBehaviour
         }
         if (Input.GetKeyDown(KeyCode.Y))
         {
-            StartSpawningEmployee(EmployeePrefab);
+            employeePrefabToSpawn = GetEmpoyeeSkin();
+            StartSpawningEmployee(employeePrefabToSpawn);
         }
 
         if (isSpawningEmployee)
         {
             HandleEmployeeSpawning();
         }
+    }
+
+    public GameObject GetEmpoyeeSkin()
+    {
+        return EmployeeSkinPrefabs[Random.Range(0, EmployeeSkinPrefabs.Count)]; 
     }
 
     public void StartSpawningEmployee(GameObject prefab)
