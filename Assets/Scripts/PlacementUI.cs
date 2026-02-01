@@ -1,11 +1,14 @@
 using UnityEngine;
 using UnityEngine.UI;
+using DG.Tweening;
 
 public class PlacementUI : MonoBehaviour
 {
     [SerializeField] private Button rotateButton;
     [SerializeField] private Button confirmButton;
     [SerializeField] private Button cancelButton; // Optional, good UX
+
+    
 
     private PlacementManager placementManager;
 
@@ -22,6 +25,23 @@ public class PlacementUI : MonoBehaviour
         }
 
         Hide();
+    }
+
+    private void OnEnable()
+    {
+        // Set initial scale to 0
+        if (cancelButton != null) cancelButton.transform.localScale = Vector3.zero;
+        rotateButton.transform.localScale = Vector3.zero;
+        confirmButton.transform.localScale = Vector3.zero;
+
+        // Animate all at once with staggered start times
+        Sequence seq = DOTween.Sequence();
+        if (cancelButton != null)
+        {
+            seq.Insert(0f, cancelButton.transform.DOScale(1f, 0.1f).SetEase(Ease.OutBack));
+        }
+        seq.Insert(0f, rotateButton.transform.DOScale(1f, 0.2f).SetEase(Ease.OutBack));
+        seq.Insert(0f, confirmButton.transform.DOScale(1f, 0.3f).SetEase(Ease.OutBack));
     }
 
     private void OnRotateClicked()

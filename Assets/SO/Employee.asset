@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f42ab9e46af9c994492237248e2ec158, type: 3}
-  m_Name: Table
+  m_Name: Employee
   m_EditorClassIdentifier: Assembly-CSharp::ShopItemSO
-  EShopItem: 0
-  ItemName: table
-  ItemSprite: {fileID: 21300000, guid: 09fd4290d3852c849a42ebcfcd760a55, type: 3}
-  ItemPrefab: {fileID: 5155179395037960730, guid: 1d943aedfe3b0584b829be551251de18, type: 3}
-  Costs: 000000000a000000230000004b00000032000000
+  EShopItem: 1
+  ItemName: Emplyoo
+  ItemSprite: {fileID: 21300000, guid: 44d7241b3c6789e4195f79781c700a85, type: 3}
+  ItemPrefab: {fileID: 753782411169378167, guid: 563ef7d0d1e4f0d46a2343921f174528, type: 3}
+  Costs: 0a0000000a00000037000000280000003c000000
