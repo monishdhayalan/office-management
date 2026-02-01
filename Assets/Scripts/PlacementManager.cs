@@ -81,6 +81,7 @@ public class PlacementManager : MonoBehaviour
             }
             else
             {
+                AudioManager.Instance.PlaySFX(SoundType.RotateObject);
                 currentGhost.Rotate();
             }
         }
@@ -152,6 +153,7 @@ public class PlacementManager : MonoBehaviour
         if (currentGhost == null) return;
         
         currentGhost.Rotate();
+        AudioManager.Instance.PlaySFX(SoundType.RotateObject);
         
         // Recalculate world position based on the LOCKED grid anchor
         Vector3 snapPos = GridManager.Instance.GridToWorldPosition(lockedGridPos.x, lockedGridPos.y);

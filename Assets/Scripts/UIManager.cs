@@ -28,7 +28,9 @@ public class UIManager : MonoBehaviour
         }
 
         OpenShopButton.onClick.AddListener(OpenShop);
+        OpenShopButton.onClick.AddListener((() => AudioManager.Instance.PlaySFX(SoundType.ButtonClick)));
         CloseShopButton.onClick.AddListener(CloseShop);
+        CloseShopButton.onClick.AddListener((() => AudioManager.Instance.PlaySFX(SoundType.ButtonClick)));
     }
 
 
@@ -38,10 +40,7 @@ public class UIManager : MonoBehaviour
         CloseShop();
     }
 
-    public void CloseShop()
-    {
-        ShopPanel.DOLocalMove(ShopOutOffScreenPos, 1.5f).SetEase(Ease.InBack);
-    }
+    
 
     private void UpdateCoins(int NewCount)
     {
@@ -50,7 +49,12 @@ public class UIManager : MonoBehaviour
 
     private void OpenShop()
     {
-        ShopPanel.DOLocalMove(ShopOnScreenPos, 1.5f).SetEase(Ease.OutBack);
+        ShopPanel.DOLocalMove(ShopOnScreenPos, .55f).SetEase(Ease.OutBack);
         
+        
+    }
+    public void CloseShop()
+    {
+        ShopPanel.DOLocalMove(ShopOutOffScreenPos, .35f).SetEase(Ease.InBack);
     }
 }

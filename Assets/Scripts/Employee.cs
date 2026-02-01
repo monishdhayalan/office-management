@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.AI;
 using System.Collections;
+using DG.Tweening;
 using Random = UnityEngine.Random;
 
 public enum EmployeeType
@@ -134,6 +135,12 @@ public class Employee : MonoBehaviour
                 // Spawn above head
                 GameObject fx = Instantiate(GameManager.Instance.MoneyEarningEffectPrefab, transform.position + Vector3.up * 3, Quaternion.identity);
                 Destroy(fx, 2f);
+                
+                GameObject textfx = Instantiate(GameManager.Instance.MoneyEarningTextPopup, transform.position + Vector3.up * 3, Quaternion.identity);
+                textfx.transform.forward = Camera.main.transform.forward;
+                textfx.transform.DOLocalMoveY(textfx.transform.position.y + 1.5f, 0.35f).SetEase(Ease.OutBack);
+                Destroy(textfx, 0.8f);
+
             }
 
             // Optional: Play work animation or effect

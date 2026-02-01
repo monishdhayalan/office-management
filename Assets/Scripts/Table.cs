@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine.AI;
 
 public class Table : PlaceableObject
@@ -27,6 +28,8 @@ public class Table : PlaceableObject
     public override void OnPlaced()
     {
         isPlaced = true;
+        AudioManager.Instance.PlaySFX(SoundType.TableSpawned);
+        Camera.main.transform.DOShakePosition(0.25f, Random.onUnitSphere * 0.15f).SetEase(Ease.OutBack).SetDelay(0.1f);
         RegisterTable();
     }
 

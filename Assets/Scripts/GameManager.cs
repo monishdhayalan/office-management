@@ -16,6 +16,7 @@ public class GameManager : MonoBehaviour
     public GameObject SpawnEffectPrefab;
     public GameObject TableSpawnEffectPrefab;
     public GameObject MoneyEarningEffectPrefab;
+    public GameObject MoneyEarningTextPopup;
 
     private bool isSpawningEmployee = false;
     private GameObject employeePrefabToSpawn;
@@ -102,6 +103,7 @@ public class GameManager : MonoBehaviour
             if (Input.GetMouseButtonDown(0))
             {
                 Employee employee = Instantiate(employeePrefabToSpawn, hit.point, Quaternion.identity).GetComponentInChildren<Employee>();
+                AudioManager.Instance.PlaySFX(SoundType.EmployeeSpawn);
 
                 if (SpawnEffectPrefab != null)
                 {
@@ -134,6 +136,7 @@ public class GameManager : MonoBehaviour
     public void AddMoney(int amount)
     {
         Money += amount;
+        AudioManager.Instance.PlaySFX(SoundType.MoneyEarned);
         OnMoneyChanged?.Invoke(Money);
         Debug.Log($"Money Added: {amount}. Total: {Money}");
     }
