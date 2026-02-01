@@ -69,7 +69,7 @@ public class Table : PlaceableObject
     
     public Vector3 GetInteractionPosition()
     {
-        Vector3 targetPos = transform.position;
+        Vector3 targetPos = InteractionPositions[0].position;
 
         if (InteractionPositions != null && InteractionPositions.Count > 0 && InteractionPositions[0] != null)
         {

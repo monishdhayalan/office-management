@@ -63,6 +63,27 @@ public class GameManager : MonoBehaviour
         {
             HandleEmployeeSpawning();
         }
+        
+        // Free coin on click when not doing anything else
+        if (Input.GetMouseButtonDown(0) && !isSpawningEmployee && !PlacementManager.Instance.IsPlacing)
+        {
+            // Randomly give 1 coin (you can adjust the chance)
+            if (Random.value > 0.7f) // 50% chance
+            {
+                // Raycast to get click position
+                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                if (Physics.Raycast(ray, out RaycastHit hit, 1000f, floorLayer))
+                {
+                    // Spawn coin particle effect
+                    if (MoneyEarningEffectPrefab != null)
+                    {
+                        GameObject fx = Instantiate(MoneyEarningEffectPrefab, hit.point + Vector3.up * 0.5f, Quaternion.Euler(-90, 0, 0));
+                        Destroy(fx, 2f);
+                    }
+                }
+                AddMoney(1);
+            }
+        }
     }
 
     private int emplyeeIndx;
@@ -81,7 +102,7 @@ public class GameManager : MonoBehaviour
         
         // Create Ghost
         if (currentEmployeeGhost != null) Destroy(currentEmployeeGhost);
-        currentEmployeeGhost = Instantiate(prefab);
+        currentEmployeeGhost = Instantiate(prefab, Vector3.zero, Quaternion.Euler(0, 180, 0));
         
         // Disable physics on ghost
         Collider[] cols = currentEmployeeGhost.GetComponentsInChildren<Collider>();
@@ -118,7 +139,7 @@ public class GameManager : MonoBehaviour
 
             if (Input.GetMouseButtonDown(0))
             {
-                Employee employee = Instantiate(employeePrefabToSpawn, hit.point, Quaternion.identity).GetComponentInChildren<Employee>();
+                Employee employee = Instantiate(employeePrefabToSpawn, hit.point, Quaternion.Euler(0,180,0)).GetComponentInChildren<Employee>();
                 AudioManager.Instance.PlaySFX(SoundType.EmployeeSpawn);
 
                 if (SpawnEffectPrefab != null)

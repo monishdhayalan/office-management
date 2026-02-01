@@ -61,6 +61,13 @@ public class ShopItem : MonoBehaviour
         
         // Subscribe to purchase confirmed to update cost after successful placement
         GameManager.Instance.OnPurchaseConfirmed += UpdateUI;
+        // Subscribe to money changed to update button interactability
+        GameManager.Instance.OnMoneyChanged += OnMoneyChanged;
+    }
+
+    private void OnMoneyChanged(int newMoney)
+    {
+        UpdateButtonState();
     }
 
     private void OnDisable()
@@ -68,6 +75,7 @@ public class ShopItem : MonoBehaviour
         if (GameManager.Instance != null)
         {
             GameManager.Instance.OnPurchaseConfirmed -= UpdateUI;
+            GameManager.Instance.OnMoneyChanged -= OnMoneyChanged;
         }
     }
 
@@ -77,6 +85,16 @@ public class ShopItem : MonoBehaviour
         {
             int currentCost = GameManager.Instance.GetItemCurrentCost(ItemSO);
             Cost.SetText(currentCost + "");
+            UpdateButtonState();
+        }
+    }
+
+    private void UpdateButtonState()
+    {
+        if (GameManager.Instance != null && ItemSO != null)
+        {
+            int currentCost = GameManager.Instance.GetItemCurrentCost(ItemSO);
+            BuyItemButton.interactable = GameManager.Instance.Money >= currentCost;
         }
     }
 }
