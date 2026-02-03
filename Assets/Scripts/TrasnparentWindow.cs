@@ -50,11 +50,31 @@ public class TrasnparentWindow : MonoBehaviour
     [Tooltip("If true, clicks pass through empty space to the desktop.")]
     public bool enableClickThrough = true;
 
+    [Tooltip("If true, the window will stay on top of other windows.")]
+    public bool alwaysOnTop = true;
+
     private bool _isClickable = true;
+
+    [DllImport("user32.dll")]
+    private static extern bool GetCursorPos(out POINT lpPoint);
+
+    [DllImport("user32.dll")]
+    private static extern bool ScreenToClient(IntPtr hWnd, ref POINT lpPoint);
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct POINT
+    {
+        public int X;
+        public int Y;
+    }
 
     private void Start()
     {
 #if !UNITY_EDITOR
+        // Transparent Window logic requires the app to run in background to detect mouse moves
+        // even when not focused (which happens when clicking through).
+        Application.runInBackground = true;
+
         // 1. Get Window Handle
         _hWnd = GetActiveWindow();
 
@@ -63,7 +83,10 @@ public class TrasnparentWindow : MonoBehaviour
         DwmExtendFrameIntoClientArea(_hWnd, ref margins);
 
         // 3. Set Always On Top
-        //SetWindowPos(_hWnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
+        if (alwaysOnTop)
+        {
+            SetWindowPos(_hWnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
+        }
 #endif
     }
 
@@ -87,38 +110,57 @@ public class TrasnparentWindow : MonoBehaviour
 #endif
     }
 
-    /// <summary>
-    /// Checks if the mouse is currently over any game content (Collider 2D/3D or UI).
-    /// </summary>
     private bool CheckForContent()
     {
-        // 1. Check UI
-        if (
-            UnityEngine.EventSystems.EventSystem.current != null
-            && UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject()
-        )
+        // We must use Windows API to get the mouse position because Input.mousePosition
+        // might not update if the window is in "Transparent" (click-through) mode.
+        POINT p;
+        if (GetCursorPos(out p))
         {
-            return true;
-        }
+            ScreenToClient(_hWnd, ref p);
+            // In Unity, (0,0) is bottom-left. In Windows Client, (0,0) is top-left.
+            // We need to invert Y.
+            Vector2 mousePos = new Vector2(p.X, Screen.height - p.Y);
 
-        // 2. Check 3D Physics
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        if (Physics.Raycast(ray, out RaycastHit hit))
-        {
-            return true;
-        }
+            // 1. Check UI (Manual Raycast)
+            if (IsPointerOverUI(mousePos))
+            {
+                return true;
+            }
 
-        // 3. Check 2D Physics (if applicable)
-        if (
-            Physics2D
-                .Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero)
-                .collider != null
-        )
-        {
-            return true;
-        }
+            // 2. Check 3D Physics
+            Ray ray = Camera.main.ScreenPointToRay(mousePos);
+            if (Physics.Raycast(ray, out RaycastHit hit))
+            {
+                return true;
+            }
 
+            // 3. Check 2D Physics (if applicable)
+            if (
+                Physics2D.Raycast(Camera.main.ScreenToWorldPoint(mousePos), Vector2.zero).collider
+                != null
+            )
+            {
+                return true;
+            }
+        }
         return false;
+    }
+
+    private bool IsPointerOverUI(Vector2 screenPos)
+    {
+        if (UnityEngine.EventSystems.EventSystem.current == null)
+            return false;
+
+        UnityEngine.EventSystems.PointerEventData eventDataCurrentPosition =
+            new UnityEngine.EventSystems.PointerEventData(
+                UnityEngine.EventSystems.EventSystem.current
+            );
+        eventDataCurrentPosition.position = screenPos;
+        System.Collections.Generic.List<UnityEngine.EventSystems.RaycastResult> results =
+            new System.Collections.Generic.List<UnityEngine.EventSystems.RaycastResult>();
+        UnityEngine.EventSystems.EventSystem.current.RaycastAll(eventDataCurrentPosition, results);
+        return results.Count > 0;
     }
 
     [DllImport("user32.dll")]
